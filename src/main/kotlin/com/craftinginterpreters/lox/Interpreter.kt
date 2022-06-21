@@ -2,18 +2,26 @@ package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
 
-class Interpreter : Visitor<Any?> {
+class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
+    private var environment = Environment()
 
-    fun interpret(expression: Expr) {
+    fun interpret(statements: List<Stmt?>) {
         try {
-            val value = evaluate(expression)
-            println(stringify(value))
+            for (statement in statements) {
+                execute(statement)
+            }
         } catch (error: RuntimeError) {
             Lox.runtimeError(error)
         }
     }
 
-    override fun visitBinaryExpr(expr: Binary): Any? {
+    override fun visitAssignExpr(expr: Expr.Assign): Any? {
+        val value = evaluate(expr.value)
+        environment.assign(expr.name, value)
+        return value
+    }
+
+    override fun visitBinaryExpr(expr: Expr.Binary): Any? {
         val left = evaluate(expr.left)
         val right = evaluate(expr.right)
 
@@ -69,15 +77,15 @@ class Interpreter : Visitor<Any?> {
         return null
     }
 
-    override fun visitGroupingExpr(expr: Grouping): Any? {
+    override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
         return evaluate(expr)
     }
 
-    override fun visitLiteralExpr(expr: Literal): Any? {
+    override fun visitLiteralExpr(expr: Expr.Literal): Any? {
         return expr.value
     }
 
-    override fun visitUnaryExpr(expr: Unary): Any? {
+    override fun visitUnaryExpr(expr: Expr.Unary): Any? {
         val right = evaluate(expr.right)
 
         when (expr.operator.type) {
@@ -90,6 +98,10 @@ class Interpreter : Visitor<Any?> {
         }
         // Unreachable
         return null
+    }
+
+    override fun visitVariableExpr(expr: Expr.Variable): Any? {
+        return environment.get(expr.name)
     }
 
     private fun checkNumberOperand(operator: Token, operand: Any?) {
@@ -132,5 +144,44 @@ class Interpreter : Visitor<Any?> {
 
     private fun evaluate(expr: Expr): Any? {
         return expr.accept(this)
+    }
+
+    private fun execute(stmt: Stmt?) {
+        stmt?.accept(this)
+    }
+
+    private fun executeBlock(statements: List<Stmt?>, environment: Environment) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+
+            for (statement in statements) {
+                execute(statement)
+            }
+        } finally {
+            this.environment = previous
+        }
+    }
+
+    override fun visitPrintStmt(stmt: Stmt.Print) {
+        val value = evaluate(stmt.expression)
+        println(stringify(value))
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        var value: Any? = null
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer)
+        }
+
+        environment.define(stmt.name.lexeme, value)
+    }
+
+    override fun visitBlockStmt(stmt: Stmt.Block) {
+        executeBlock(stmt.statements, Environment(environment))
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        evaluate(stmt.expression)
     }
 }

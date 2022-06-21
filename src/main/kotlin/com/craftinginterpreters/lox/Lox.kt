@@ -44,14 +44,12 @@ private fun run(source: String) {
     val scanner = Scanner(source)
     val tokens = scanner.scanTokens()
     val parser = Parser(tokens)
-    val expression = parser.parse()
+    val statements = parser.parse()
 
     // Stop if there was a syntax error.
     if (hadError) return
 
-    if (expression != null) {
-        Lox.interpreter.interpret(expression)
-    }
+    Lox.interpreter.interpret(statements)
 }
 
 class Lox {
@@ -76,7 +74,7 @@ class Lox {
         }
 
         private fun report(line: Int, where: String, message: String) {
-            println("[line $line] Error $where: $message")
+            System.err.println("[line $line] Error $where: $message")
             hadError = true
         }
     }
