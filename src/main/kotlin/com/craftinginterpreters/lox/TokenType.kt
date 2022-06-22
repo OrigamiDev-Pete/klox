@@ -9,6 +9,8 @@ enum class TokenType {
     EQUAL, EQUAL_EQUAL,
     GREATER, GREAT_EQUAL,
     LESS, LESS_EQUAL,
+    MINUS_EQUAL, PLUS_EQUAL,
+    SLASH_EQUAL, STAR_EQUAL,
 
     // Literals.
     IDENTIFIER, STRING, NUMBER,

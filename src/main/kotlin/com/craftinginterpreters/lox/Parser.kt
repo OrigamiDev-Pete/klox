@@ -18,10 +18,6 @@ class Parser(private val tokens: List<Token>) {
         return statements
     }
 
-    private fun expression(): Expr {
-        return assignment()
-    }
-
     private fun declaration(): Stmt? {
         try {
             if (match(VAR)) return varDeclaration()
@@ -141,12 +137,57 @@ class Parser(private val tokens: List<Token>) {
         return statements
     }
 
+    private fun expression(): Expr {
+        return assignment()
+    }
+
     private fun assignment(): Expr {
+
         val expr = or()
 
         if (match(EQUAL)) {
             val equals = previous()
             val value = assignment()
+
+            if (expr is Expr.Variable) {
+                val name = expr.name
+                return Expr.Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
+        } else if (match(PLUS_EQUAL)) {
+            val equals = previous()
+            val value = Expr.Binary(expr, Token(PLUS, "", null, equals.line), assignment())
+
+            if (expr is Expr.Variable) {
+                val name = expr.name
+                return Expr.Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
+        } else if (match(MINUS_EQUAL)) {
+            val equals = previous()
+            val value = Expr.Binary(expr, Token(MINUS, "", null, equals.line), assignment())
+
+            if (expr is Expr.Variable) {
+                val name = expr.name
+                return Expr.Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
+        } else if (match(STAR_EQUAL)) {
+            val equals = previous()
+            val value = Expr.Binary(expr, Token(STAR, "", null, equals.line), assignment())
+
+            if (expr is Expr.Variable) {
+                val name = expr.name
+                return Expr.Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
+        } else if (match(SLASH_EQUAL)) {
+            val equals = previous()
+            val value = Expr.Binary(expr, Token(SLASH, "", null, equals.line), assignment())
 
             if (expr is Expr.Variable) {
                 val name = expr.name

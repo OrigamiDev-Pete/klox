@@ -47,10 +47,10 @@ class Scanner(private val source: String) {
             '}' -> addToken(RIGHT_BRACE)
             ',' -> addToken(COMMA)
             '.' -> addToken(DOT)
-            '-' -> addToken(MINUS)
-            '+' -> addToken(PLUS)
+            '-' -> addToken(if (match('=')) MINUS_EQUAL else MINUS)
+            '+' -> addToken(if (match('=')) PLUS_EQUAL else PLUS)
             ';' -> addToken(SEMICOLON)
-            '*' -> addToken(STAR)
+            '*' -> addToken(if (match('=')) STAR_EQUAL else STAR)
             '!' -> addToken(if (match('=')) BANG_EQUAL else BANG)
             '=' -> addToken(if (match('=')) EQUAL_EQUAL else EQUAL)
             '<' -> addToken(if (match('=')) LESS_EQUAL else LESS)
@@ -61,7 +61,7 @@ class Scanner(private val source: String) {
             } else if (match('*')) {
                 multilineComment()
             } else {
-                addToken(SLASH)
+                addToken(if (match('=')) SLASH_EQUAL else SLASH)
             }
 
             // Ignore whitespace.
