@@ -15,6 +15,7 @@ fun main(args: Array<String>) {
         "Binary   : val left: Expr, val operator: Token, val right: Expr",
         "Grouping : val expression: Expr",
         "Literal  : val value: Any?",
+        "Logical  : val left: Expr, val operator: Token, val right: Expr",
         "Unary    : val operator: Token, val right: Expr",
         "Variable : val name: Token"
     ))
@@ -22,8 +23,10 @@ fun main(args: Array<String>) {
     defineAst(outputDir, "Stmt", listOf(
         "Block      : val statements: List<Stmt?>",
         "Expression : val expression: Expr",
+        "If         : val condition: Expr, val thenBranch: Stmt, val elseBranch: Stmt?",
         "Print      : val expression: Expr",
-        "Var        : val name: Token, val initializer: Expr?"
+        "Var        : val name: Token, val initializer: Expr?",
+        "While      : val condition: Expr, val body: Stmt",
     ))
 }
 

@@ -34,10 +34,76 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun statement(): Stmt {
+        if (match(FOR)) return forStatement()
+        if (match(IF)) return ifStatement()
         if (match(PRINT)) return printStatement()
+        if (match(WHILE)) return whileStatement()
         if (match(LEFT_BRACE)) return Stmt.Block(block())
 
         return expressionStatement()
+    }
+
+    private fun forStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.")
+
+        val initializer: Stmt?
+        if (match(SEMICOLON)) {
+            initializer = null
+        } else if (match(VAR)) {
+            initializer = varDeclaration()
+        } else {
+            initializer = expressionStatement()
+        }
+
+        var condition: Expr? = null
+        if (!check(SEMICOLON)) {
+            condition = expression()
+        }
+        consume(SEMICOLON, "Expect ';' after loop condition.")
+
+        var increment: Expr? = null
+        if (!check(RIGHT_PAREN)) {
+            increment = expression()
+        }
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        var body = statement()
+
+        if (increment != null) {
+            body = Stmt.Block(listOf(body, Stmt.Expression(increment)))
+        }
+
+        if (condition == null) condition = Expr.Literal(true)
+        body = Stmt.While(condition, body)
+
+        if (initializer != null) {
+            body = Stmt.Block(listOf(initializer, body))
+        }
+
+        return body
+    }
+
+    private fun whileStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after while condition.")
+        val body = statement()
+
+        return Stmt.While(condition, body)
+    }
+
+    private fun ifStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+        var elseBranch: Stmt? = null
+        if (match(ELSE)) {
+            elseBranch = statement()
+        }
+
+        return Stmt.If(condition, thenBranch, elseBranch)
     }
 
     private fun printStatement(): Stmt {
@@ -76,7 +142,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun assignment(): Expr {
-        val expr = equality()
+        val expr = or()
 
         if (match(EQUAL)) {
             val equals = previous()
@@ -88,6 +154,30 @@ class Parser(private val tokens: List<Token>) {
             }
 
             error(equals, "Invalid assignment target.")
+        }
+
+        return expr
+    }
+
+    private fun or(): Expr {
+        var expr = and()
+
+        while (match(OR)) {
+            val operator = previous()
+            val right = and()
+            expr = Expr.Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private fun and(): Expr {
+        var expr = equality()
+
+        while (match(AND)) {
+            val operator = previous()
+            val right = equality()
+            expr = Expr.Logical(expr, operator, right)
         }
 
         return expr
