@@ -49,6 +49,12 @@ private fun run(source: String) {
     // Stop if there was a syntax error.
     if (hadError) return
 
+    val resolver = Resolver(Lox.interpreter)
+    resolver.resolve(statements)
+
+    // Stop if there was a resolution error.
+    if (hadError) return
+
     Lox.interpreter.interpret(statements)
 }
 

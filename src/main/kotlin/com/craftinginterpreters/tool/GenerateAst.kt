@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
     ))
 
     defineAst(outputDir, "Stmt", listOf(
-        "Block      : val statements: List<Stmt?>",
+        "Block      : val statements: List<Stmt>",
         "Expression : val expression: Expr",
         "If         : val condition: Expr, val thenBranch: Stmt, val elseBranch: Stmt?",
         "Function   : val name: Token, val params: List<Token>, val body: List<Stmt?>",
