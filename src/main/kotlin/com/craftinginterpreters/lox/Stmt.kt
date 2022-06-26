@@ -3,6 +3,7 @@ package com.craftinginterpreters.lox
 abstract class Stmt {
     interface Visitor<R> {
         fun visitBlockStmt(stmt: Block): R
+        fun visitClassStmt(stmt: Class): R
         fun visitExpressionStmt(stmt: Expression): R
         fun visitIfStmt(stmt: If): R
         fun visitFunctionStmt(stmt: Function): R
@@ -17,6 +18,12 @@ abstract class Stmt {
    class Block(val statements: List<Stmt?>) : Stmt() {
        override fun <R> accept(visitor: Visitor<R>): R {
            return visitor.visitBlockStmt(this)
+       }
+   }
+
+   class Class(val name: Token, val methods: List<Function>) : Stmt() {
+       override fun <R> accept(visitor: Visitor<R>): R {
+           return visitor.visitClassStmt(this)
        }
    }
 

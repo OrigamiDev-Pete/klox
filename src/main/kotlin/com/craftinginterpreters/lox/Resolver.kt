@@ -5,6 +5,7 @@ import kotlin.collections.HashMap
 class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
     private val scopes = ArrayDeque<MutableMap<String, Boolean>>()
     private var currentFunction = FunctionType.NONE
+    private var currentClass = ClassType.NONE
 
     fun resolve(statements: List<Stmt?>) {
         for (statement in statements) {
@@ -32,6 +33,10 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         }
     }
 
+    override fun visitGetExpr(expr: Expr.Get) {
+        resolve(expr.obj)
+    }
+
     override fun visitGroupingExpr(expr: Expr.Grouping) {
         resolve(expr.expression)
     }
@@ -43,6 +48,19 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
     override fun visitLogicalExpr(expr: Expr.Logical) {
         resolve(expr.left)
         resolve(expr.right)
+    }
+
+    override fun visitSetExpr(expr: Expr.Set) {
+        resolve(expr.value)
+        resolve(expr.obj)
+    }
+
+    override fun visitThisExpr(expr: Expr.This) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class")
+            return
+        }
+        resolveLocal(expr, expr.keyword)
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary) {
@@ -71,6 +89,29 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         beginScope()
         resolve(stmt.statements)
         endScope()
+    }
+
+    override fun visitClassStmt(stmt: Stmt.Class) {
+        val enclosingClass = currentClass
+        currentClass = ClassType.CLASS
+
+        declare(stmt.name)
+        define(stmt.name)
+
+        beginScope()
+        scopes.last()["this"] = true
+
+        for (method in stmt.methods) {
+            var declaration = FunctionType.METHOD
+            if (method.name!!.lexeme == "init") {
+                declaration = FunctionType.INITIALIZER
+            }
+            resolveFunction(method, declaration)
+        }
+
+        endScope()
+
+        currentClass = enclosingClass
     }
 
     private fun resolve(stmt: Stmt) {
@@ -153,7 +194,13 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         if (currentFunction == FunctionType.NONE) {
             Lox.error(stmt.keyword, "Can't return from top-level code.")
         }
-        if (stmt.value != null) resolve(stmt.value)
+        if (stmt.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Lox.error(stmt.keyword, "Can't return a value from an initializer")
+            }
+
+            resolve(stmt.value)
+        }
     }
 
     override fun visitVarStmt(stmt: Stmt.Var) {
@@ -171,6 +218,13 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
 
     private enum class FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        INITIALIZER,
+        METHOD
+    }
+
+    private enum class ClassType {
+        NONE,
+        CLASS
     }
 }

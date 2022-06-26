@@ -25,6 +25,8 @@ print a;
 print b;
 print c;
 
+print "";
+
 var a = 0;
 var temp;
 
@@ -99,7 +101,30 @@ fun thrice(fn) {
 thrice(fun (a) {
     print a;
 });
-print "";
 
 var test = fun (a) { print a; };
 test("hello");
+
+print "";
+
+// Classes and Methods //
+print "// Classes and Methods //";
+class Bacon {
+    eat() {
+        print "Crunch crunch crunch!";
+    }
+}
+
+Bacon().eat();
+
+// This //
+class Cake {
+    taste() {
+        var adjective = "delicious";
+        print "The " + this.flavour + " cake is " + adjective + "!";
+    }
+}
+
+var cake = Cake();
+cake.flavour = "German Chocolate";
+cake.taste();

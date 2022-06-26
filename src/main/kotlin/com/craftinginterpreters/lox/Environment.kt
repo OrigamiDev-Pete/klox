@@ -15,7 +15,7 @@ class Environment() {
 
     fun ancestor(distance: Int): Environment {
         var environment = this
-        for (i in 0..distance) {
+        for (i in 0 until distance) {
             environment = environment.enclosing!!
         }
 
