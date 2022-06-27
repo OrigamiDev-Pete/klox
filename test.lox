@@ -128,3 +128,19 @@ class Cake {
 var cake = Cake();
 cake.flavour = "German Chocolate";
 cake.taste();
+
+// Superclasses //
+class Doughnut {
+    cook() {
+        print "Fry until golden brown.";
+    }
+}
+
+class BostonCream < Doughnut {
+    cook() {
+        super.cook();
+        print "Pipe full of custard and coat with chocolate.";
+    }
+}
+
+BostonCream().cook();
